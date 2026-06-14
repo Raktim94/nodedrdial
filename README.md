@@ -160,8 +160,8 @@ git --version
 Open **Command Prompt** or **PowerShell** and run:
 
 ```cmd
-git clone https://github.com/nodedr/twilioHub-oss.git
-cd twilioHub-oss
+git clone https://github.com/Raktim94/nodedrdial.git
+cd nodedrdial
 ```
 
 ### Step 4 — Configure Environment
@@ -275,8 +275,8 @@ If not installed, macOS will prompt you to install Xcode Command Line Tools — 
 
 In Terminal:
 ```bash
-git clone https://github.com/nodedr/twilioHub-oss.git
-cd twilioHub-oss
+git clone https://github.com/Raktim94/nodedrdial.git
+cd nodedrdial
 ```
 
 ### Step 4 — Configure Environment
@@ -391,14 +391,14 @@ git --version
 
 ```bash
 # Clone to /opt/twilioHub (recommended for servers)
-sudo git clone https://github.com/nodedr/twilioHub-oss.git /opt/twilioHub
+sudo git clone https://github.com/Raktim94/nodedrdial.git /opt/twilioHub
 sudo chown -R $USER:$USER /opt/twilioHub
 cd /opt/twilioHub
 ```
 
 Or clone to your home directory for local use:
 ```bash
-git clone https://github.com/nodedr/twilioHub-oss.git ~/twilioHub
+git clone https://github.com/Raktim94/nodedrdial.git ~/twilioHub
 cd ~/twilioHub
 ```
 
