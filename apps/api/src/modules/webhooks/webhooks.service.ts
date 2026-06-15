@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import axios from 'axios';
 import * as crypto from 'crypto';
+import * as Twilio from 'twilio';
 import { Webhook, WebhookEvent, WebhookEventStatus } from '../../entities/webhook.entity';
 import { MessagesService } from '../messages/messages.service';
 import { CallsService } from '../calls/calls.service';
@@ -33,13 +34,20 @@ export class WebhooksService {
 
   async handleIncomingVoice(organizationId: string, payload: any): Promise<string> {
     await this.callsService.handleIncoming(organizationId, payload);
-    const response = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Connect>
-    <Stream url="wss://your-server/calls/${organizationId}"/>
-  </Connect>
-</Response>`;
-    return response;
+
+    const twiml = new Twilio.twiml.VoiceResponse();
+
+    // Outbound call initiated from browser via TwiML App
+    if (payload.Direction === 'outbound-api' || (payload.To && !payload.To.startsWith('client:'))) {
+      const dial = twiml.dial({ callerId: payload.From });
+      dial.number(payload.To);
+    } else {
+      // Inbound phone call — ring the browser softphone for this org
+      const dial = twiml.dial();
+      dial.client(organizationId);
+    }
+
+    return twiml.toString();
   }
 
   async handleVoiceStatus(payload: any, organizationId: string) {

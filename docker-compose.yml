@@ -50,8 +50,8 @@ services:
   # ── Backend API (NestJS) ─────────────────────────────────
   api:
     build:
-      context: ./apps/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/api/Dockerfile
       target: production
     <<: *restart-policy
     environment:
