@@ -39,24 +39,53 @@ export class TwilioService {
     const cred = await this.credRepo.findOne({ where: { organizationId } });
     if (!cred) throw new NotFoundException('Twilio credentials not configured for this organization');
 
-    const accountSid = decrypt(cred.accountSidEncrypted, this.getEncryptionKey());
-    const authToken = decrypt(cred.authTokenEncrypted, this.getEncryptionKey());
-    const client = Twilio(accountSid, authToken);
+    const key = this.getEncryptionKey();
+    const accountSid = decrypt(cred.accountSidEncrypted, key);
+
+    let client: Twilio.Twilio;
+
+    // Case 2 (recommended): API Key SID + API Secret — revocable, production-safe
+    if (cred.apiKeyEncrypted && cred.apiSecretEncrypted) {
+      const apiKey = decrypt(cred.apiKeyEncrypted, key);
+      const apiSecret = decrypt(cred.apiSecretEncrypted, key);
+      client = Twilio(apiKey, apiSecret, { accountSid });
+    } else if (cred.authTokenEncrypted) {
+      // Case 1 (testing only): Account SID + Auth Token
+      const authToken = decrypt(cred.authTokenEncrypted, key);
+      client = Twilio(accountSid, authToken);
+    } else {
+      throw new BadRequestException(
+        'No valid Twilio credentials. Provide either API Key + Secret (recommended) or Auth Token.',
+      );
+    }
+
     this.clients.set(organizationId, client);
     return client;
   }
 
   async saveCredentials(organizationId: string, dto: SaveCredentialsDto) {
+    const hasAuthToken = !!dto.authToken;
+    const hasApiKey = !!(dto.apiKey && dto.apiSecret);
+
+    if (!hasAuthToken && !hasApiKey) {
+      throw new BadRequestException(
+        'Provide either Auth Token (Case 1 — testing) or both API Key and API Secret (Case 2 — production).',
+      );
+    }
+    if (dto.apiKey && !dto.apiSecret) {
+      throw new BadRequestException('API Secret is required when providing an API Key.');
+    }
+
     const key = this.getEncryptionKey();
     const existing = await this.credRepo.findOne({ where: { organizationId } });
 
     const data: Partial<TwilioCredential> = {
       organizationId,
       accountSidEncrypted: encrypt(dto.accountSid, key),
-      authTokenEncrypted: encrypt(dto.authToken, key),
       isVerified: false,
     };
 
+    if (dto.authToken) data.authTokenEncrypted = encrypt(dto.authToken, key);
     if (dto.apiKey) data.apiKeyEncrypted = encrypt(dto.apiKey, key);
     if (dto.apiSecret) data.apiSecretEncrypted = encrypt(dto.apiSecret, key);
     if (dto.twimlAppSid) data.twimlAppSid = dto.twimlAppSid;
@@ -69,7 +98,8 @@ export class TwilioService {
       await this.credRepo.save(this.credRepo.create(data));
     }
 
-    return { message: 'Credentials saved' };
+    const authMethod = hasApiKey ? 'API Key (Case 2 — production)' : 'Auth Token (Case 1 — testing)';
+    return { message: `Credentials saved using ${authMethod}` };
   }
 
   async testConnection(organizationId: string) {
@@ -105,8 +135,14 @@ export class TwilioService {
   async getCredentialStatus(organizationId: string) {
     const cred = await this.credRepo.findOne({ where: { organizationId } });
     if (!cred) return { configured: false };
+
+    const authMethod = (cred.apiKeyEncrypted && cred.apiSecretEncrypted)
+      ? 'api_key'   // Case 2 — production recommended
+      : 'auth_token'; // Case 1 — testing only
+
     return {
       configured: true,
+      authMethod,
       isVerified: cred.isVerified,
       lastCheckedAt: cred.lastCheckedAt,
       accountName: cred.accountName,

@@ -15,7 +15,7 @@ export class TwilioCredential {
   @Column({ name: 'account_sid_encrypted' })
   accountSidEncrypted: string;
 
-  @Column({ name: 'auth_token_encrypted' })
+  @Column({ name: 'auth_token_encrypted', nullable: true })
   authTokenEncrypted: string;
 
   @Column({ name: 'api_key_encrypted', nullable: true })

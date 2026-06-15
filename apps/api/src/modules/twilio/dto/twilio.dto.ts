@@ -2,25 +2,34 @@ import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class SaveCredentialsDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Twilio Account SID (starts with AC)' })
   @IsString()
   accountSid: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: 'Auth Token — Case 1: local testing only. Not recommended for production. ' +
+      'If compromised, your entire Twilio account is at risk.',
+  })
+  @IsOptional()
   @IsString()
-  authToken: string;
+  authToken?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'API Key SID (starts with SK) — Case 2: recommended for production. ' +
+      'Can be revoked independently without affecting other credentials.',
+  })
   @IsOptional()
   @IsString()
   apiKey?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'API Key Secret — required when using API Key (Case 2).',
+  })
   @IsOptional()
   @IsString()
   apiSecret?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'TwiML App SID (starts with AP) — required for browser voice calling.' })
   @IsOptional()
   @IsString()
   twimlAppSid?: string;
