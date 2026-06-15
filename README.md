@@ -525,16 +525,57 @@ sudo systemctl enable twilioHub
 
 ## Post-Installation: Connect Twilio
 
-After completing the setup wizard:
+TwilioHub supports two authentication methods as defined in the [Twilio API docs](https://www.twilio.com/docs/usage/requests-to-twilio).
 
+### Case 1 — Auth Token (local testing only)
+
+> **Warning:** If your Auth Token is leaked, your entire Twilio account is compromised. Use Case 2 for any server exposed to the internet.
+
+1. Go to [console.twilio.com](https://console.twilio.com) → copy your **Account SID** and **Auth Token**
+2. In TwilioHub go to **Settings → Twilio Credentials**
+3. Enter **Account SID** and **Auth Token**, leave API Key fields empty
+4. Click **Save**, then **Test Connection**
+
+### Case 2 — API Key + Secret (recommended for production)
+
+API Keys can be revoked independently without affecting your account or other credentials.
+
+**Step 1 — Create an API Key in the Twilio Console:**
+1. Go to [console.twilio.com](https://console.twilio.com) → **Account** → **API keys & tokens**
+2. Click **Create API key**
+3. Choose **Standard** key type (full access except account/keys management)
+4. Copy the **SID** (starts with `SK`) — this is your API Key
+5. Copy the **Secret** (shown once only, store it safely)
+
+**Step 2 — Save credentials in TwilioHub:**
 1. Go to **Settings → Twilio Credentials**
-2. Enter your **Account SID** and **Auth Token** (from [console.twilio.com](https://console.twilio.com))
-3. Click **Test Connection** — you should see a green "Connected" banner
-4. Click **Sync Phone Numbers** to import your Twilio numbers
+2. Enter your **Account SID**, **API Key SID**, and **API Secret**
+3. Click **Save** — you will see `Credentials saved using API Key (Case 2 — production)`
+4. Click **Test Connection** — green "Connected" banner confirms it works
+5. Click **Sync Phone Numbers** to import your Twilio numbers
 
-For browser calling (softphone), you also need:
-- A **Twilio API Key** (created in Twilio Console → API Keys)
-- A **TwiML App** pointing to `https://your-domain.com/api/webhooks/twilio/voice`
+### Browser Calling (Softphone)
+
+To enable in-browser voice calls, you also need a TwiML App:
+
+1. Go to Twilio Console → **Develop** → **Voice** → **TwiML Apps** → **Create**
+2. Set the **Voice Request URL** to:
+   ```
+   https://your-domain.com/api/webhooks/twilio/voice?orgId=YOUR_ORG_ID
+   ```
+3. Copy the **TwiML App SID** (starts with `AP`)
+4. Add it to your credentials in TwilioHub under **TwiML App SID**
+
+### Webhook URLs to configure in Twilio
+
+Set these on each phone number in the Twilio Console → **Phone Numbers** → your number → **Configure**:
+
+| Webhook | URL |
+|---------|-----|
+| SMS — A message comes in | `https://your-domain.com/api/webhooks/twilio/sms?orgId=YOUR_ORG_ID` |
+| SMS — Status callback | `https://your-domain.com/api/webhooks/twilio/sms/status?orgId=YOUR_ORG_ID` |
+| Voice — A call comes in | `https://your-domain.com/api/webhooks/twilio/voice?orgId=YOUR_ORG_ID` |
+| Voice — Status callback | `https://your-domain.com/api/webhooks/twilio/voice/status?orgId=YOUR_ORG_ID` |
 
 See [docs/TWILIO-INTEGRATION.md](docs/TWILIO-INTEGRATION.md) for full details.
 
