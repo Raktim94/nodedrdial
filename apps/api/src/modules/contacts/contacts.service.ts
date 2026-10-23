@@ -71,7 +71,7 @@ export class ContactsService {
   }
 
   async importCsv(organizationId: string, csvBuffer: Buffer) {
-    const rows = parse(csvBuffer, {
+    const rows: Record<string, string>[] = parse(csvBuffer, {
       columns: true,
       skip_empty_lines: true,
       trim: true,
